@@ -14,6 +14,7 @@ attempt at constructing the ABC algorithm.
 import numpy as np
 from simulator import simulate
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Extract the summary statistics required from observations.
 infected = pd.read_csv("data/infected_timeseries.csv")
@@ -35,13 +36,62 @@ rewire_max = np.array(
     [np.max(split_rewiring[i]['rewire_count']) for i in range(40)])
 
 
-# Set seed for reproducability.
-np.random.seed(3247)
-
 # Fix the number of simulations.
-Nsim = 10000
+Nsim = 50000
 
 # Generate beta, gamma, rho using the prior distributions.
 beta = np.random.uniform(0.05, 0.50, Nsim)
 gamma = np.random.uniform(0.02, 0.20, Nsim)
 rho = np.random.uniform(0.0, 0.8, Nsim)
+
+# Simulate the data using generated beta, gamma, rho.
+infected_sim = []
+rewire_sim = []
+degree_sim = []
+for i in range(Nsim):
+    infected_fraction, rewire_counts, degree_histogram = simulate(
+        beta[i], gamma[i], rho[i])
+    infected_sim.append(infected_fraction)
+    rewire_sim.append(rewire_counts)
+    degree_sim.append(degree_histogram)
+
+infected_sim = np.array(infected_sim)
+rewire_sim = np.array(rewire_sim)
+degree_sim = np.array(degree_sim)
+
+
+# Generate summary statistics based on initial choice of summary statistics.
+p_sim = np.max(infected_sim, axis=1)
+pr_sim = np.max(infected_sim, axis=1) / \
+    infected_sim[np.arange(infected_sim.shape[0]),
+                 np.argmax(infected_sim, axis=1)+1]
+r_sim = np.max(rewire_sim, axis=1)
+sd_p = np.std(p_sim)
+sd_pr = np.std(pr_sim)
+sd_r = np.std(r_sim)
+d = np.sqrt(
+    ((p_sim - np.mean(infected_max))/sd_p)**2 +
+    ((pr_sim - np.mean(infected_argmax))/sd_pr)**2 +
+    ((r_sim - np.mean(rewire_max))/sd_r)**2
+)
+
+# Accept only the 1% data
+epsilon = np.quantile(d, 0.01)
+betafilter = beta[d <= epsilon]
+gammafilter = gamma[d <= epsilon]
+rhofilter = rho[d <= epsilon]
+
+plt.title("Beta Approximate Posterior")
+plt.hist(betafilter, bins=50, density=True)
+plt.axvline(x=np.mean(betafilter), color='r')
+plt.show()
+
+plt.title("Gamma Approximate Posterior")
+plt.hist(gammafilter, bins=50, density=True)
+plt.axvline(x=np.mean(gammafilter), color='r')
+plt.show()
+
+plt.title("Rho Approximate Posterior")
+plt.hist(rhofilter, bins=50, density=True)
+plt.axvline(x=np.mean(rhofilter), color='r')
+plt.show()
