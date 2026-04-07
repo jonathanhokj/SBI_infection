@@ -7,7 +7,6 @@ for infection proportion.
 """
 
 import numpy as np
-from simulator import simulate
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -32,30 +31,13 @@ rewire_max = np.array(
 infected_timemax = np.array(
     [np.argmax(split_infected[i]['infected_fraction']) for i in range(40)])
 
-
-# Fix the number of simulations.
-Nsim = 50000
-
-# Generate beta, gamma, rho using the prior distributions.
-beta = np.random.uniform(0.05, 0.50, Nsim)
-gamma = np.random.uniform(0.02, 0.20, Nsim)
-rho = np.random.uniform(0.0, 0.8, Nsim)
-
-# Simulate the data using generated beta, gamma, rho.
-infected_sim = []
-rewire_sim = []
-degree_sim = []
-for i in range(Nsim):
-    infected_fraction, rewire_counts, degree_histogram = simulate(
-        beta[i], gamma[i], rho[i])
-    infected_sim.append(infected_fraction)
-    rewire_sim.append(rewire_counts)
-    degree_sim.append(degree_histogram)
-
-infected_sim = np.array(infected_sim)
-rewire_sim = np.array(rewire_sim)
-degree_sim = np.array(degree_sim)
-
+# Load generated data from another file
+beta = np.load("simulated_data/beta.npy")
+gamma = np.load("simulated_data/gamma.npy")
+rho = np.load("simulated_data/rho.npy")
+infected_sim = np.load("simulated_data/infected_sim.npy")
+rewire_sim = np.load("simulated_data/rewire_sim.npy")
+degree_sim = np.load("simulated_data/degree_sim.npy")
 
 # Generate summary statistics based on initial choice of summary statistics.
 p_sim = np.max(infected_sim, axis=1)
@@ -97,4 +79,22 @@ plt.show()
 plt.title("Rho Approximate Posterior")
 plt.hist(rhofilter, bins=50, density=True)
 plt.axvline(x=np.mean(rhofilter), color='r')
+plt.show()
+
+plt.title("Beta against Gamma")
+plt.scatter(betafilter, gammafilter)
+plt.xlabel("Beta")
+plt.ylabel("Gamma")
+plt.show()
+
+plt.title("Beta against Rho")
+plt.scatter(betafilter, rhofilter)
+plt.xlabel("Beta")
+plt.ylabel("Rho")
+plt.show()
+
+plt.title("Gamma against Rho")
+plt.scatter(gammafilter, rhofilter)
+plt.xlabel("Gamma")
+plt.ylabel("Rho")
 plt.show()
