@@ -89,7 +89,7 @@ d = np.sqrt(
     ((degmax_sim - np.mean(degree_max))/sd_dmax)**2 +
     ((vardeg_sim - np.mean(degree_var))/sd_vdeg)**2
 )
-epsilon_target = np.quantile(d, 0.1)
+epsilon_target = np.quantile(d, 0.05)
 
 s_obs = np.array([
     np.mean(infected_max),
