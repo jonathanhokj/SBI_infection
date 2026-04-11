@@ -1,5 +1,13 @@
 """
 ABC MCMC.
+This uses ABC MCMC to try and improve our posterior distributions.
+Note that to perform ABC MCMC, we would require data from another
+basic ABC rejection. I used the data obtained from the regression
+adjustment as so far, that gives us the sharpest posterior
+distribution.
+
+Every step, we use a markov chain to propose new parameters which
+can lead to better exploration of high-dimensional parameter spaces.
 """
 
 import numpy as np
