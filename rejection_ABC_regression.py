@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from simulator import simulate
 
 # Extract the summary statistics required from observations.
 infected = pd.read_csv("data/infected_timeseries.csv")
@@ -157,4 +158,62 @@ plt.title("Gamma against Rho")
 plt.scatter(gamma_adj, rho_adj)
 plt.xlabel("Gamma")
 plt.ylabel("Rho")
+plt.show()
+
+# Posterior Predictive Overlays
+num_predictive_samples = 50
+indices = np.random.choice(
+    len(beta_adj), size=num_predictive_samples, replace=False)
+
+ppc_inf, ppc_rew, ppc_deg = [], [], []
+
+for idx in indices:
+    inf, rew, deg = simulate(beta_adj[idx], gamma_adj[idx], rho_adj[idx])
+    ppc_inf.append(inf)
+    ppc_rew.append(rew)
+    ppc_deg.append(deg)
+
+obs_inf_mean = np.mean(
+    [split_infected[i]['infected_fraction'].values for i in range(40)], axis=0)
+obs_rew_mean = np.mean(
+    [split_rewiring[i]['rewire_count'].values for i in range(40)], axis=0)
+
+obs_deg_counts = np.zeros((40, 31))
+for i in range(40):
+    rep_data = split_degree[i]
+    for _, row in rep_data.iterrows():
+        d_val = int(row['degree'])
+        bin_idx = min(d_val, 30)  # Final bin catches degree >= 30
+        obs_deg_counts[i, bin_idx] += row['count']
+obs_deg_mean = np.mean(obs_deg_counts, axis=0)
+
+fig, axes = plt.subplots(1, 3, figsize=(21, 6))
+
+for sim in ppc_inf:
+    axes[0].plot(sim, color='skyblue', alpha=0.3)
+axes[0].plot(obs_inf_mean, color='red', linewidth=2.5, label='Observed (Mean)')
+axes[0].set_title("A: Infected Fraction PPC", fontsize=14)
+axes[0].set_xlabel("Time", fontsize=12)
+axes[0].set_ylabel("Fraction of Nodes", fontsize=12)
+axes[0].legend()
+
+for sim in ppc_rew:
+    axes[1].plot(sim, color='lightgreen', alpha=0.3)
+axes[1].plot(obs_rew_mean, color='green',
+             linewidth=2.5, label='Observed (Mean)')
+axes[1].set_title("B: Rewiring Count PPC", fontsize=14)
+axes[1].set_xlabel("Time", fontsize=12)
+axes[1].set_ylabel("Count per Step", fontsize=12)
+axes[1].legend()
+
+for sim in ppc_deg:
+    axes[2].plot(range(31), sim, color='purple', alpha=0.15)
+axes[2].plot(range(31), obs_deg_mean, color='black',
+             linestyle='--', linewidth=2.5, label='Observed (Mean)')
+axes[2].set_title("C: Final Degree Distribution PPC", fontsize=14)
+axes[2].set_xlabel("Node Degree", fontsize=12)
+axes[2].set_ylabel("Frequency", fontsize=12)
+axes[2].legend()
+
+plt.tight_layout()
 plt.show()
