@@ -17,7 +17,7 @@ rewire_sim = []
 degree_sim = []
 for i in range(Nsim):
     infected_fraction, rewire_counts, degree_histogram = simulate(
-        0.160, 0.08, 0.30)
+        0.150, 0.08, 0.30)
     infected_sim.append(infected_fraction)
     rewire_sim.append(rewire_counts)
     degree_sim.append(degree_histogram)
